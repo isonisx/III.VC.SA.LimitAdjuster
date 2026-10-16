@@ -3,6 +3,14 @@
     Use 'premake5 --help' for help
 --]]
 
+-- macOS host, 32-bit Windows target for the classic GTA games.
+if os.host() ~= "macosx" then
+    error("This build requires macOS and the i686-w64-mingw32 toolchain.")
+end
+if _ACTION and _ACTION ~= "gmake" and _ACTION ~= "gmake2" then
+    error("Use premake5 gmake to generate the local cross-build.")
+end
+_OPTIONS["os"] = "windows"
 
 --[[
     Options and Actions
@@ -27,20 +35,42 @@ newoption {
 --[[
     The Solution
 --]]
+-- Put version strings in the generated resource instead of passing them through
+-- both make's shell and windres's preprocessor shell (which strips their quotes).
+local resourceDefines = {}
+local function versionDefines(values)
+    for _, value in ipairs(values) do
+        local name, definition = value:match("^([^=]+)=(.*)$")
+        table.insert(resourceDefines, "#define " .. name .. " " .. definition .. "\n")
+    end
+end
+
 solution "OpenLA"
 
     configurations { "Release", "Debug" }
+    system "windows"
+    architecture "x86"
+    toolset "gcc"
+    gccprefix "i686-w64-mingw32-"
+    cppdialect "C++17"
+    -- Hooks use Intel-syntax x86 assembly and the games' four-byte stack alignment.
+    buildoptions { "-fms-extensions", "-fpermissive", "-masm=intel", "-mno-sse", "-mno-sse2", "-mpreferred-stack-boundary=2", "-mincoming-stack-boundary=2" }
+    linkoptions {
+        "-static-libgcc", "-static-libstdc++",
+        "-Wl,-Bstatic,--whole-archive", "-lwinpthread",
+        "-Wl,-Bdynamic,--no-whole-archive"
+    }
 
     location( _OPTIONS["outdir"] )
     targetprefix "" -- no 'lib' prefix on gcc
-    targetdir "bin"
-    implibdir "bin"
+    targetdir "bin/%{cfg.buildcfg}"
+    objdir "%{_OPTIONS.outdir}/obj/%{cfg.buildcfg}"
     
-    defines { "rsc_CompanyName=\"LimitAdjuster\"" }
-    defines { "rsc_LegalCopyright=\"MIT License\""}
-    defines { "rsc_InternalName=\"%{prj.name}\"", "rsc_ProductName=\"%{prj.name}\"", "rsc_OriginalFilename=\"%{cfg.buildtarget.name}\"" }
-    defines { "rsc_FileDescription=\"This is a open source limit adjuster for Grand Theft Auto III, Vice City and San Andreas\"" }
-    defines { "rsc_UpdateUrl=\"https://github.com/ThirteenAG/III.VC.SA.LimitAdjuster\"" }
+    versionDefines { "rsc_CompanyName=\"LimitAdjuster\"" }
+    versionDefines { "rsc_LegalCopyright=\"MIT License\""}
+    versionDefines { "rsc_InternalName=\"III.VC.SA.LimitAdjuster\"", "rsc_ProductName=\"III.VC.SA.LimitAdjuster\"", "rsc_OriginalFilename=\"III.VC.SA.LimitAdjuster.asi\"" }
+    versionDefines { "rsc_FileDescription=\"This is a open source limit adjuster for Grand Theft Auto III, Vice City and San Andreas\"" }
+    versionDefines { "rsc_UpdateUrl=\"https://github.com/ThirteenAG/III.VC.SA.LimitAdjuster\"" }
 
     local major = os.date("%d")
     local minor = os.date("%m")
@@ -71,14 +101,14 @@ solution "OpenLA"
         productVersion = productVersion .. "-" .. githash
     end
 
-    defines { "rsc_FileVersion_MAJOR=" .. major }
-    defines { "rsc_FileVersion_MINOR=" .. minor }
-    defines { "rsc_FileVersion_BUILD=" .. build }
-    defines { "rsc_FileVersion_REVISION=" .. revision }
-    defines { "rsc_FileVersion=\"" .. major .. "." .. minor .. "." .. build .. "\"" }
-    defines { "rsc_ProductVersion=\"" .. productVersion .. "\"" }
-    defines { "rsc_GitSHA1=\"" .. githash .. "\"" }
-    defines { "rsc_GitSHA1W=L\"" .. githash .. "\"" }
+    versionDefines { "rsc_FileVersion_MAJOR=" .. major }
+    versionDefines { "rsc_FileVersion_MINOR=" .. minor }
+    versionDefines { "rsc_FileVersion_BUILD=" .. build }
+    versionDefines { "rsc_FileVersion_REVISION=" .. revision }
+    versionDefines { "rsc_FileVersion=\"" .. major .. "." .. minor .. "." .. build .. "\"" }
+    versionDefines { "rsc_ProductVersion=\"" .. productVersion .. "\"" }
+    versionDefines { "rsc_GitSHA1=\"" .. githash .. "\"" }
+    versionDefines { "rsc_GitSHA1W=L\"" .. githash .. "\"" }
 
     staticruntime "On"
     rtti "Off"
@@ -104,13 +134,11 @@ solution "OpenLA"
 
     filter "configurations:Debug*"
         symbols "On"
+        defines { "DEBUG", "_DEBUG" }
 
     filter "configurations:Release*"
         defines { "NDEBUG" }
         optimize "Speed"
-
-    filter "action:vs*"
-        buildoptions { "/arch:IA32" }           -- disable the use of SSE/SSE2 instructions
 
     filter {}
 
@@ -128,8 +156,25 @@ solution "OpenLA"
             "src/**.h",
             "doc/**"
         }
-        files { "src/resources/Versioninfo.rc" }
-        excludes { "sample.cpp" }
+        -- windres requires UTF-8 input; convert the resource and its header.
+        local resource = path.join(_OPTIONS["outdir"], "Versioninfo.rc")
+        if _ACTION then
+            os.mkdir(_OPTIONS["outdir"])
+            for _, name in ipairs { "Versioninfo.rc", "VersionInfo.h" } do
+                local result = os.execute('iconv -f UTF-16 -t UTF-8 "src/resources/' .. name .. '" > "' .. path.join(_OPTIONS["outdir"], name) .. '"')
+                if result ~= true and result ~= 0 then
+                    error("Failed to convert " .. name .. " to UTF-8")
+                end
+            end
+            local input = assert(io.open(resource, "rb"))
+            local contents = input:read("*a")
+            input:close()
+            local output = assert(io.open(resource, "wb"))
+            output:write(table.concat(resourceDefines), contents)
+            output:close()
+        end
+        files { resource }
+        resincludedirs { "src/resources" }
+        removefiles { "src/sample/**" }
         
         
-

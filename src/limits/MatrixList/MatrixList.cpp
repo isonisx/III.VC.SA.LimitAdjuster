@@ -7,6 +7,10 @@
 #include "utility/dummy_object.hpp"
 #include <injector/utility.hpp>
 #include <memory>
+#include <cstring>
+
+struct MatrixList;
+extern MatrixList adjuster_MatrixList;
 
 
 /*
@@ -149,4 +153,3 @@ struct MatrixList : public SimpleAdjuster
 
 // Instantiate the adjuster on the global scope
 } adjuster_MatrixList;
-

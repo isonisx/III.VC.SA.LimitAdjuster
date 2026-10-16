@@ -7,6 +7,7 @@
 #include "LimitAdjuster.h"
 #include <vector>
 #include <map>
+#include <algorithm>
 #include <math.h>
 #include "yacl/General.h"
 #include "yacl/Coronas.h"
@@ -16,7 +17,7 @@
 int NUM_CORONAS;
 
 #define WRAPPER __declspec(naked)
-#define EAXJMP(a) { _asm mov eax, a _asm jmp eax }
+#define EAXJMP(a) __asm__("mov eax, " #a "\n\tjmp eax")
 
 std::map<unsigned int, CCoronasLinkedListNode*>	CCoronas::UsedMap;
 CCoronasLinkedListNode							CCoronas::FreeList, CCoronas::UsedList;
@@ -26,7 +27,7 @@ int& CCoronas::bChangeBrightnessImmediately = *(int*)0xC3E034;
 float& CCoronas::ScreenMult = *(float*)0x8D4B5C;
 
 WRAPPER void CRegisteredCorona::Update() { EAXJMP(0x6FABF0); }
-WRAPPER void CEntity::RegisterReference(CEntity** pAddress) { (pAddress); EAXJMP(0x571B70); }
+WRAPPER void CEntity::RegisterReference(CEntity**) { EAXJMP(0x571B70); }
 WRAPPER int CCamera::GetLookDirection() { EAXJMP(0x50AE90); }
 
 CCamera& TheCamera = *(CCamera*)0xB6F028;
@@ -136,7 +137,7 @@ void CCoronas::RegisterCorona(unsigned int nID, CEntity* pAttachTo, unsigned cha
 
 void CCoronas::Update()
 {
-    ScreenMult = min(1.0f, (float)*(DWORD*)0xB7CB5C * 0.03f + ScreenMult);
+    ScreenMult = std::min(1.0f, (float)*(DWORD*)0xB7CB5C * 0.03f + ScreenMult);
 
     static unsigned int		nSomeHackyMask = 0;
     unsigned int			nThisHackyMask = 0;
@@ -154,7 +155,7 @@ void CCoronas::Update()
         nThisHackyMask |= 8;
 
     if (nSomeHackyMask == nThisHackyMask)
-        bChangeBrightnessImmediately = max(0, bChangeBrightnessImmediately - 1);
+        bChangeBrightnessImmediately = std::max(0, bChangeBrightnessImmediately - 1);
     else
     {
         bChangeBrightnessImmediately = 3;
@@ -440,161 +441,152 @@ void PatchCoronasVC()
 
 void __declspec(naked)patch_542434()
 {
-    __asm
-    {
-        cmp eax, CORONAS_LIMIT
+    __asm__(R"(
+        cmp eax, dword ptr [_CORONAS_LIMIT]
         jnb loc_542442
-        mov _eax, eax
-        mov eax, [aCoronasData]
+        mov dword ptr [__eax], eax
+        mov eax, [_aCoronasData]
         add eax, 0xC
         cmp edx, dword ptr ds : [eax + ebx]
-        mov eax, _eax
+        mov eax, dword ptr [__eax]
         jne loc_542430
         loc_542442 :
-        cmp eax, CORONAS_LIMIT
+        cmp eax, dword ptr [_CORONAS_LIMIT]
             je loc_542489
-            mov jmpAddress, 0x54244B
-            jmp jmpAddress
+            mov dword ptr [_jmpAddress], 0x54244B
+            jmp dword ptr [_jmpAddress]
             loc_542489 :
-        mov jmpAddress, 0x542489
-            jmp jmpAddress
+        mov dword ptr [_jmpAddress], 0x542489
+            jmp dword ptr [_jmpAddress]
             loc_542430 :
-        mov jmpAddress, 0x542430
-            jmp jmpAddress
-    }
+        mov dword ptr [_jmpAddress], 0x542430
+            jmp dword ptr [_jmpAddress]
+    )");
 }
 
 void __declspec(naked)patch_5425B7()
 {
-    __asm
-    {
-        cmp edx, CORONAS_LIMIT
+    __asm__(R"(
+        cmp edx, dword ptr [_CORONAS_LIMIT]
         jnb loc_5425C5
-        mov _eax, eax
-        mov eax, [aCoronasData]
+        mov dword ptr [__eax], eax
+        mov eax, [_aCoronasData]
         add eax, 0xC
         cmp esi, dword ptr ds : [eax + ecx]
-        mov eax, _eax
+        mov eax, dword ptr [__eax]
         jne loc_5425B3
         loc_5425C5 :
-        cmp edx, CORONAS_LIMIT
+        cmp edx, dword ptr [_CORONAS_LIMIT]
             jne loc_542680
-            mov jmpAddress, 0x5425CF
-            jmp jmpAddress
+            mov dword ptr [_jmpAddress], 0x5425CF
+            jmp dword ptr [_jmpAddress]
             loc_542680 :
-        mov jmpAddress, 0x542680
-            jmp jmpAddress
+        mov dword ptr [_jmpAddress], 0x542680
+            jmp dword ptr [_jmpAddress]
             loc_5425B3 :
-        mov jmpAddress, 0x5425B3
-            jmp jmpAddress
-    }
+        mov dword ptr [_jmpAddress], 0x5425B3
+            jmp dword ptr [_jmpAddress]
+    )");
 }
 
 void __declspec(naked)patch_5425F4()
 {
-    __asm
-    {
-        cmp edx, CORONAS_LIMIT
+    __asm__(R"(
+        cmp edx, dword ptr [_CORONAS_LIMIT]
         jnb loc_542603
-        mov _ebx, ebx
-        mov ebx, [aCoronasData]
+        mov dword ptr [__ebx], ebx
+        mov ebx, [_aCoronasData]
         add ebx, 0xC
         cmp dword ptr ds : [ebx + eax] , 0
-        mov ebx, _ebx
+        mov ebx, dword ptr [__ebx]
         jne loc_5425F0
         loc_542603 :
-        cmp edx, CORONAS_LIMIT
+        cmp edx, dword ptr [_CORONAS_LIMIT]
             jne loc_542616
-            mov jmpAddress, 0x542609
-            jmp jmpAddress
+            mov dword ptr [_jmpAddress], 0x542609
+            jmp dword ptr [_jmpAddress]
             loc_542616 :
-        mov jmpAddress, 0x542616
-            jmp jmpAddress
+        mov dword ptr [_jmpAddress], 0x542616
+            jmp dword ptr [_jmpAddress]
             loc_5425F0 :
-        mov jmpAddress, 0x5425F0
-            jmp jmpAddress
-    }
+        mov dword ptr [_jmpAddress], 0x5425F0
+            jmp dword ptr [_jmpAddress]
+    )");
 }
 
 void __declspec(naked)patch_542955()
 {
-    __asm
-    {
-        cmp eax, CORONAS_LIMIT
-        mov _eax, eax
-        mov eax, [aCoronasData]
+    __asm__(R"(
+        cmp eax, dword ptr [_CORONAS_LIMIT]
+        mov dword ptr [__eax], eax
+        mov eax, [_aCoronasData]
         add eax, 0xC
-        mov dword ptr ds : [eax + edx * 8h] , 0
-        mov eax, _eax
-        mov jmpAddress, 0x542964
-        jmp jmpAddress
-    }
+        mov dword ptr ds : [eax + edx * 8] , 0
+        mov eax, dword ptr [__eax]
+        mov dword ptr [_jmpAddress], 0x542964
+        jmp dword ptr [_jmpAddress]
+    )");
 }
 
 void __declspec(naked)patch_54310C()
 {
-    __asm
-    {
-        cmp eax, CORONAS_LIMIT
-        mov _eax, eax
-        mov eax, [aCoronasData]
+    __asm__(R"(
+        cmp eax, dword ptr [_CORONAS_LIMIT]
+        mov dword ptr [__eax], eax
+        mov eax, [_aCoronasData]
         add eax, 0x34
         mov byte ptr ds : [eax + esi * 8] , cl
-        mov eax, _eax
-        mov jmpAddress, 0x543116
-        jmp jmpAddress
-    }
+        mov eax, dword ptr [__eax]
+        mov dword ptr [_jmpAddress], 0x543116
+        jmp dword ptr [_jmpAddress]
+    )");
 }
 
 void __declspec(naked)patch_543497()
 {
-    __asm
-    {
-        add ebp, 68h
-        mov _eax, eax
-        mov eax, CORONAS_LIMIT
+    __asm__(R"(
+        add ebp, 0x68
+        mov dword ptr [__eax], eax
+        mov eax, dword ptr [_CORONAS_LIMIT]
         cmp dword ptr[esp], eax
-        mov eax, _eax
-        mov jmpAddress, 0x54349E
-        jmp jmpAddress
-    }
+        mov eax, dword ptr [__eax]
+        mov dword ptr [_jmpAddress], 0x54349E
+        jmp dword ptr [_jmpAddress]
+    )");
 }
 
 void __declspec(naked)patch_543E0C()
 {
-    __asm
-    {
-        mov _eax, eax
-        mov eax, CORONAS_LIMIT
+    __asm__(R"(
+        mov dword ptr [__eax], eax
+        mov eax, dword ptr [_CORONAS_LIMIT]
         cmp dword ptr[esp + 0x38], eax
-        mov eax, _eax
-        mov jmpAddress, 0x543E12
-        jmp jmpAddress
-    }
+        mov eax, dword ptr [__eax]
+        mov dword ptr [_jmpAddress], 0x543E12
+        jmp dword ptr [_jmpAddress]
+    )");
 }
 
 void __declspec(naked)patch_544086()
 {
-    __asm
-    {
-        mov _eax, eax
-        mov eax, CORONAS_LIMIT
-        cmp word ptr[esp + 34h], ax
-        mov eax, _eax
-        mov jmpAddress, 0x54408C
-        jmp jmpAddress
-    }
+    __asm__(R"(
+        mov dword ptr [__eax], eax
+        mov eax, dword ptr [_CORONAS_LIMIT]
+        cmp word ptr[esp + 0x34], ax
+        mov eax, dword ptr [__eax]
+        mov dword ptr [_jmpAddress], 0x54408C
+        jmp dword ptr [_jmpAddress]
+    )");
 }
 
 void __declspec(naked)patch_544214()
 {
-    __asm
-    {
-        add esi, 68h
-        cmp ebx, CORONAS_LIMIT
-        mov jmpAddress, 0x54421A
-        jmp jmpAddress
-    }
+    __asm__(R"(
+        add esi, 0x68
+        cmp ebx, dword ptr [_CORONAS_LIMIT]
+        mov dword ptr [_jmpAddress], 0x54421A
+        jmp dword ptr [_jmpAddress]
+    )");
 }
 
 
@@ -811,134 +803,125 @@ void PatchCoronasIII()
 
 void __declspec(naked) patch_4F8FA7()
 {
-    __asm
-    {
-        cmp ebx, CORONAS_LIMIT
+    __asm__(R"(
+        cmp ebx, dword ptr [_CORONAS_LIMIT]
         jb loc_4F8F90
-        jmp ext_4F8FAC
+        jmp dword ptr [_ext_4F8FAC]
         loc_4F8F90 :
-        jmp ext_4F8F90
-    }
+        jmp dword ptr [_ext_4F8F90]
+    )");
 }
 
 void __declspec(naked) patch_4F9860()
 {
-    __asm
-    {
-        mov _eax, eax
-        mov eax, CORONAS_LIMIT
-        cmp dword ptr[esp + 3Ch], eax
-        mov eax, _eax
-        jmp ext_4F9866
-    }
+    __asm__(R"(
+        mov dword ptr [__eax], eax
+        mov eax, dword ptr [_CORONAS_LIMIT]
+        cmp dword ptr[esp + 0x3C], eax
+        mov eax, dword ptr [__eax]
+        jmp dword ptr [_ext_4F9866]
+    )");
 }
 
 void __declspec(naked) patch_4F9ABD()
 {
-    __asm
-    {
-        mov _eax, eax
-        mov eax, CORONAS_LIMIT
-        cmp dword ptr[esp + 34h], eax
-        mov eax, _eax
-        jmp ext_4F9AC3
-    }
+    __asm__(R"(
+        mov dword ptr [__eax], eax
+        mov eax, dword ptr [_CORONAS_LIMIT]
+        cmp dword ptr[esp + 0x34], eax
+        mov eax, dword ptr [__eax]
+        jmp dword ptr [_ext_4F9AC3]
+    )");
 }
 
 void __declspec(naked) patch_4F9BA7()
 {
-    __asm
-    {
-        cmp eax, CORONAS_LIMIT
+    __asm__(R"(
+        cmp eax, dword ptr [_CORONAS_LIMIT]
         jb loc_4F9B66
-        jmp ext_4F9BAD
+        jmp dword ptr [_ext_4F9BAD]
         loc_4F9B66 :
-        jmp ext_4F9B66
-    }
+        jmp dword ptr [_ext_4F9B66]
+    )");
 }
 
 void __declspec(naked) patch_4F9F2A()
 {
-    __asm
-    {
-        mov _eax, eax
-        mov eax, CORONAS_LIMIT
+    __asm__(R"(
+        mov dword ptr [__eax], eax
+        mov eax, dword ptr [_CORONAS_LIMIT]
         cmp dword ptr[esp], eax
-        mov eax, _eax
-        jmp ext_4F9F2F
-    }
+        mov eax, dword ptr [__eax]
+        jmp dword ptr [_ext_4F9F2F]
+    )");
 }
 
 void __declspec(naked) patch_4FA03B()
 {
-    __asm
-    {
-        cmp eax, CORONAS_LIMIT
+    __asm__(R"(
+        cmp eax, dword ptr [_CORONAS_LIMIT]
         jb loc_4F9FE2
-        jmp ext_4FA041
+        jmp dword ptr [_ext_4FA041]
         loc_4F9FE2 :
-        jmp ext_4F9FE2
-    }
+        jmp dword ptr [_ext_4F9FE2]
+    )");
 }
 
 void __declspec(naked) patch_4FA12C()
 {
-    __asm
-    {
-        cmp edx, CORONAS_LIMIT
+    __asm__(R"(
+        cmp edx, dword ptr [_CORONAS_LIMIT]
         jnb loc_4FA13A
-        mov _eax, eax
-        mov eax, [aCoronasData]
+        mov dword ptr [__eax], eax
+        mov eax, [_aCoronasData]
         cmp edi, dword ptr ds : [eax + ebx]
-        mov eax, _eax
+        mov eax, dword ptr [__eax]
         jne loc_4FA128
         loc_4FA13A :
-        cmp edx, CORONAS_LIMIT
-            jmp ext_4FA13E
+        cmp edx, dword ptr [_CORONAS_LIMIT]
+            jmp dword ptr [_ext_4FA13E]
             loc_4FA128 :
-        jmp ext_4FA128
-    }
+        jmp dword ptr [_ext_4FA128]
+    )");
 }
 
 void __declspec(naked) patch_4FA15B()
 {
-    __asm
-    {
-        cmp edx, CORONAS_LIMIT
+    __asm__(R"(
+        cmp edx, dword ptr [_CORONAS_LIMIT]
         jnb loc_4FA16A
-        mov _ebx, ebx
-        mov ebx, [aCoronasData]
+        mov dword ptr [__ebx], ebx
+        mov ebx, [_aCoronasData]
         cmp dword ptr ds : [ebx + eax] , 0
-        mov ebx, _ebx
+        mov ebx, dword ptr [__ebx]
         jne loc_4FA157
         loc_4FA16A :
-        cmp edx, CORONAS_LIMIT
-            jmp ext_4FA16E
+        cmp edx, dword ptr [_CORONAS_LIMIT]
+            jmp dword ptr [_ext_4FA16E]
             loc_4FA157 :
-        jmp ext_4FA157
-    }
+        jmp dword ptr [_ext_4FA157]
+    )");
 }
 
 void __declspec(naked) patch_4FA324()
 {
-    __asm
-    {
-        cmp eax, CORONAS_LIMIT
+    __asm__(R"(
+        cmp eax, dword ptr [_CORONAS_LIMIT]
         jnb loc_4FA332
-        mov _eax, eax
-        mov eax, [aCoronasData]
+        mov dword ptr [__eax], eax
+        mov eax, [_aCoronasData]
         cmp edx, dword ptr ds : [eax + ebx]
-        mov eax, _eax
+        mov eax, dword ptr [__eax]
         jne loc_4FA320
         loc_4FA332 :
-        cmp eax, CORONAS_LIMIT
+        cmp eax, dword ptr [_CORONAS_LIMIT]
             je loc_4FA379
-            jmp ext_4FA33B
+            jmp dword ptr [_ext_4FA33B]
             loc_4FA379 :
-        jmp ext_4FA379
+        jmp dword ptr [_ext_4FA379]
             loc_4FA320 :
-        jmp ext_4FA320
-    }
+        jmp dword ptr [_ext_4FA320]
+    )");
 }
 
 class CoronasIII : public SimpleAdjuster

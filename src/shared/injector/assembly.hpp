@@ -25,11 +25,11 @@
  */
 #pragma once
 
-// This header is very restrict about compiler and architecture
-#ifndef _MSC_VER    // MSVC is much more flexible when we're talking about inline assembly
-#error  Cannot use this header in another compiler other than MSVC
+// Altered for the macOS-hosted MinGW build: GNU Intel-syntax assembly.
+#if !defined(__GNUC__) || !defined(__MINGW32__)
+#error  This header requires MinGW GCC
 #endif
-#ifndef _M_IX86
+#ifndef __i386__
 #error  Supported only in x86
 #endif
 
@@ -87,7 +87,7 @@ namespace injector
         template<class T>
         struct wrapper
         {
-            static void call(reg_pack* regs)
+            static void __attribute__((used, noinline)) call(reg_pack* regs)
             {
                 T fun; fun(*regs);
             }
@@ -97,26 +97,21 @@ namespace injector
         template<class W>   // where W is of type wrapper
         inline void __declspec(naked) make_reg_pack_and_call()
         {
-            _asm
-            {
-                // Construct the reg_pack structure on the stack
-                pushfd              // Pushes EFLAGS to reg_pack
-                pushad              // Pushes general purposes registers to reg_pack
-                add dword ptr[esp+12], 8     // Add 4 to reg_pack::esp 'cuz of our return pointer, let it be as before this func is called
-
-                // Call wrapper sending reg_pack as parameter
-                push esp
-                call W::call
-                add esp, 4
-
-                // Destructs the reg_pack from the stack
-                sub dword ptr[esp+12], 8   // Fix reg_pack::esp before popping it (doesn't make a difference though) (+4 because eflags)
-                popad
-                popfd               // Warning: Do not use any instruction that changes EFLAGS after this (-> sub affects EF!! <-)
-
-                // Back to normal flow
-                ret
-            }
+            // The sole operand is a link-time immediate: no compiler-generated
+            // register setup may precede the register snapshot in this naked hook.
+            __asm__ volatile(
+                "pushfd\n\t"
+                "pushad\n\t"
+                "add dword ptr [esp+12], 8\n\t"
+                "push esp\n\t"
+                "call %c0\n\t"
+                "add esp, 4\n\t"
+                "sub dword ptr [esp+12], 8\n\t"
+                "popad\n\t"
+                "popfd\n\t"
+                "ret"
+                : : "i" (&W::call) : "memory"
+            );
         }
     };
 
@@ -129,7 +124,6 @@ namespace injector
     void MakeInline(memory_pointer_tr at)
     {
         typedef injector_asm::wrapper<FuncT> functor;
-        if(false) functor::call(nullptr);   // To instantiate the template, if not done _asm will fail
         MakeCALL(at, injector_asm::make_reg_pack_and_call<functor>);
     }
 

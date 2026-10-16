@@ -253,18 +253,17 @@ void PatchPermanentShadows()
 
 void __declspec(naked) patch_706ED0()
 {
-    __asm
-    {
+    __asm__(R"(
         push esi
         push edi
-        mov edi, ds: [0C403D8h]
+        mov edi, ds: [0xC403D8]
         test edi, edi
         jz loc_706ED0
-        align 16
+        .balign 16
         walk_free_list :
-        mov esi, [edi + 54h]
+        mov esi, [edi + 0x54]
         push edi
-        call dword ptr free
+        call _free
         add esp, 4
         mov edi, esi
         test edi, edi
@@ -272,107 +271,99 @@ void __declspec(naked) patch_706ED0()
         loc_706ED0 :
         pop edi
             pop esi
-            jmp ext_706ED0
-    }
+            jmp dword ptr [_ext_706ED0]
+    )");
 }
 
 void __declspec(naked) patch_706FE2()
 {
-    __asm
-    {
-        cmp edi, SSHADS_LIMIT
+    __asm__(R"(
+        cmp edi, dword ptr [_SSHADS_LIMIT]
         jl loc_7072D2
-        jmp ext_706FEB
+        jmp dword ptr [_ext_706FEB]
         loc_7072D2 :
-        jmp ext_7072D2
-    }
+        jmp dword ptr [_ext_7072D2]
+    )");
 }
 
 void __declspec(naked) patch_7072C0()
 {
-    __asm
-    {
-        cmp eax, SSHADS_LIMIT
+    __asm__(R"(
+        cmp eax, dword ptr [_SSHADS_LIMIT]
         jl loc_706FF8
-        cmp edi, SSHADS_LIMIT
-        jmp ext_7072CC
+        cmp edi, dword ptr [_SSHADS_LIMIT]
+        jmp dword ptr [_ext_7072CC]
         loc_706FF8 :
-        jmp ext_706FF8
-    }
+        jmp dword ptr [_ext_706FF8]
+    )");
 }
 
 void __declspec(naked) patch_707391()
 {
-    __asm
-    {
-        mov esi, ds: [0C403DCh]
-        cmp esi, SSHADS_LIMIT
-        jmp ext_70739C
-    }
+    __asm__(R"(
+        mov esi, ds: [0xC403DC]
+        cmp esi, dword ptr [_SSHADS_LIMIT]
+        jmp dword ptr [_ext_70739C]
+    )");
 }
 
 void __declspec(naked) patch_70990A()
 {
-    __asm
-    {
+    __asm__(R"(
         jnz free_list
-        push 104				// sizeof(CPolyBunch)
-        call dword ptr malloc
+        push 104
+        call _malloc
         add esp, 4
         mov ebx, eax
         jmp loc_70991E
         free_list :
-        mov ecx, [ebx + 54h]
-            mov ds : [0C403D8h] , ecx
+        mov ecx, [ebx + 0x54]
+            mov ds : [0xC403D8] , ecx
             loc_70991E :
-        lea eax, [ebx + 54h]
+        lea eax, [ebx + 0x54]
             test ebp, ebp
-            jmp ext_70991E
-    }
+            jmp dword ptr [_ext_70991E]
+    )");
 }
 
 void __declspec(naked) patch_70BB3C()
 {
-    __asm
-    {
+    __asm__(R"(
         inc edi
-        cmp edi, SSHADS_LIMIT
-        jmp ext_70BB41
-    }
+        cmp edi, dword ptr [_SSHADS_LIMIT]
+        jmp dword ptr [_ext_70BB41]
+    )");
 }
 
 void __declspec(naked) patch_70BB60()
 {
-    __asm
-    {
+    __asm__(R"(
         inc edi
-        cmp edi, SSHADS_LIMIT
-        jmp ext_70BB65
-    }
+        cmp edi, dword ptr [_SSHADS_LIMIT]
+        jmp dword ptr [_ext_70BB65]
+    )");
 }
 
 void __declspec(naked) patch_70BB67()
 {
-    __asm
-    {
-        cmp edi, SSHADS_LIMIT
+    __asm__(R"(
+        cmp edi, dword ptr [_SSHADS_LIMIT]
         je loc_70BA6F
-        jmp ext_70BB71
+        jmp dword ptr [_ext_70BB71]
         loc_70BA6F :
-        jmp ext_70BA6F
-    }
+        jmp dword ptr [_ext_70BA6F]
+    )");
 }
 
 void __declspec(naked) patch_70BC49()
 {
-    __asm
-    {
-        cmp edi, SSHADS_LIMIT
+    __asm__(R"(
+        cmp edi, dword ptr [_SSHADS_LIMIT]
         jge loc_70BB43
-        jmp ext_70BC53
+        jmp dword ptr [_ext_70BC53]
         loc_70BB43 :
-        jmp ext_70BB43
-    }
+        jmp dword ptr [_ext_70BB43]
+    )");
 }
 
 class StaticShadowsSA : public SimpleAdjuster
@@ -570,141 +561,130 @@ void PatchStaticShadowsVC()
 DWORD ext_569684 = 0x569684;
 void __declspec(naked) patch_56967E()
 {
-    __asm
-    {
-        add     ebx, 40h
-        cmp     ecx, SSHADS_LIMIT
-        jmp ext_569684
-    }
+    __asm__(R"(
+        add     ebx, 0x40
+        cmp     ecx, dword ptr [_SSHADS_LIMIT]
+        jmp dword ptr [_ext_569684]
+    )");
 }
 
 DWORD ext_56E92A = 0x56E92A;
 DWORD ext_56E93B = 0x56E93B;
 void __declspec(naked) patch_56E924()
 {
-    __asm
-    {
-        cmp     esi, SSHADS_LIMIT
+    __asm__(R"(
+        cmp     esi, dword ptr [_SSHADS_LIMIT]
         jge     loc_56E93B
-        jmp ext_56E92A
+        jmp dword ptr [_ext_56E92A]
         loc_56E93B :
-        jmp ext_56E93B
-    }
+        jmp dword ptr [_ext_56E93B]
+    )");
 }
 
 DWORD ext_56E948 = 0x56E948;
 DWORD ext_56EB27 = 0x56EB27;
 void __declspec(naked) patch_56E93B()
 {
-    __asm
-    {
-        cmp     esi, SSHADS_LIMIT
+    __asm__(R"(
+        cmp     esi, dword ptr [_SSHADS_LIMIT]
         jge     loc_56EB27
         mov   ebp, esi
-        jmp ext_56E948
+        jmp dword ptr [_ext_56E948]
         loc_56EB27 :
-        jmp ext_56EB27
-    }
+        jmp dword ptr [_ext_56EB27]
+    )");
 }
 
 DWORD ext_56EB3A = 0x56EB3A;
 DWORD ext_56EB43 = 0x56EB43;
 void __declspec(naked) patch_56EB34()
 {
-    __asm
-    {
-        cmp     esi, SSHADS_LIMIT
+    __asm__(R"(
+        cmp     esi, dword ptr [_SSHADS_LIMIT]
         jge      loc_56EB43
-        jmp ext_56EB3A
+        jmp dword ptr [_ext_56EB3A]
         loc_56EB43 :
-        jmp ext_56EB43
-    }
+        jmp dword ptr [_ext_56EB43]
+    )");
 }
 
 DWORD ext_56EB49 = 0x56EB49;
 DWORD ext_56EB60 = 0x56EB60;
 void __declspec(naked) patch_56EB43()
 {
-    __asm
-    {
-        cmp     esi, SSHADS_LIMIT
+    __asm__(R"(
+        cmp     esi, dword ptr [_SSHADS_LIMIT]
         jnz     loc_56EB60
-        jmp ext_56EB49
+        jmp dword ptr [_ext_56EB49]
         loc_56EB60 :
-        jmp ext_56EB60
-    }
+        jmp dword ptr [_ext_56EB60]
+    )");
 }
 
 DWORD ext_56F0A4 = 0x56F0A4;
 void __declspec(naked) patch_56F09B()
 {
-    __asm
-    {
-        add     edx, 200h
-        cmp     eax, SSHADS_LIMIT
-        jmp ext_56F0A4
-    }
+    __asm__(R"(
+        add     edx, 0x200
+        cmp     eax, dword ptr [_SSHADS_LIMIT]
+        jmp dword ptr [_ext_56F0A4]
+    )");
 }
 
 DWORD ext_56C724 = 0x56C724;
 void __declspec(naked) patch_56C71B()
 {
-    __asm
-    {
-        add     ebp, 200h
-        cmp     eax, SSHADS_LIMIT
-        jmp ext_56C724
-    }
+    __asm__(R"(
+        add     ebp, 0x200
+        cmp     eax, dword ptr [_SSHADS_LIMIT]
+        jmp dword ptr [_ext_56C724]
+    )");
 }
 
 
 DWORD ext_56C7C1 = 0x56C7C1;
 void __declspec(naked) patch_56C7BC()
 {
-    __asm
-    {
+    __asm__(R"(
         pop     ecx
-        cmp     eax, SSHADS_LIMIT
+        cmp     eax, dword ptr [_SSHADS_LIMIT]
         pop     ecx
-        jmp ext_56C7C1
-    }
+        jmp dword ptr [_ext_56C7C1]
+    )");
 }
 
 DWORD ext_56CBAD = 0x56CBAD;
 void __declspec(naked) patch_56CBA8()
 {
-    __asm
-    {
-        mov _EAX, eax
-        mov eax, SSHADS_LIMIT
-        cmp     dword ptr ds : [esp + 20h] , eax
-        mov eax, _EAX
-        jmp ext_56CBAD
-    }
+    __asm__(R"(
+        mov dword ptr [__EAX], eax
+        mov eax, dword ptr [_SSHADS_LIMIT]
+        cmp     dword ptr ds : [esp + 0x20] , eax
+        mov eax, dword ptr [__EAX]
+        jmp dword ptr [_ext_56CBAD]
+    )");
 }
 
 DWORD ext_56CC15 = 0x56CC15;
 void __declspec(naked) patch_56CC10()
 {
-    __asm
-    {
-        mov _EAX, eax
-        mov eax, SSHADS_LIMIT
-        cmp     dword ptr ds : [esp + 28h] , eax
-        mov eax, _EAX
-        jmp ext_56CC15
-    }
+    __asm__(R"(
+        mov dword ptr [__EAX], eax
+        mov eax, dword ptr [_SSHADS_LIMIT]
+        cmp     dword ptr ds : [esp + 0x28] , eax
+        mov eax, dword ptr [__EAX]
+        jmp dword ptr [_ext_56CC15]
+    )");
 }
 
 DWORD ext_568F1C = 0x568F1C;
 void __declspec(naked) patch_568F17()
 {
-    __asm
-    {
+    __asm__(R"(
         sub     edx, ebx
-        cmp     eax, SSHADS_LIMIT
-        jmp ext_568F1C
-    }
+        cmp     eax, dword ptr [_SSHADS_LIMIT]
+        jmp dword ptr [_ext_568F1C]
+    )");
 }
 
 
@@ -889,128 +869,118 @@ DWORD ext_51321A = 0x51321A;
 DWORD ext_51322B = 0x51322B;
 void __declspec(naked) patch_513214()
 {
-    __asm
-    {
-        cmp     ebp, SSHADS_LIMIT
+    __asm__(R"(
+        cmp     ebp, dword ptr [_SSHADS_LIMIT]
         jge     loc_51322B
-        jmp ext_51321A
+        jmp dword ptr [_ext_51321A]
         loc_51322B :
-        jmp ext_51322B
-    }
+        jmp dword ptr [_ext_51322B]
+    )");
 }
 
 DWORD ext_513238 = 0x513238;
 DWORD ext_513442 = 0x513442;
 void __declspec(naked) patch_51322B()
 {
-    __asm
-    {
-        cmp     ebp, SSHADS_LIMIT
+    __asm__(R"(
+        cmp     ebp, dword ptr [_SSHADS_LIMIT]
         jge     loc_513442
         mov   edx, ebp
-        jmp ext_513238
+        jmp dword ptr [_ext_513238]
         loc_513442 :
-        jmp ext_513442
-    }
+        jmp dword ptr [_ext_513442]
+    )");
 }
 
 DWORD ext_513452 = 0x513452;
 DWORD ext_51345B = 0x51345B;
 void __declspec(naked) patch_51344C()
 {
-    __asm
-    {
-        cmp     ebp, SSHADS_LIMIT
+    __asm__(R"(
+        cmp     ebp, dword ptr [_SSHADS_LIMIT]
         jge    loc_51345B
-        jmp ext_513452
+        jmp dword ptr [_ext_513452]
         loc_51345B :
-        jmp ext_51345B
-    }
+        jmp dword ptr [_ext_51345B]
+    )");
 }
 
 DWORD ext_513538 = 0x513538;
 DWORD ext_513465 = 0x513465;
 void __declspec(naked) patch_51345B()
 {
-    __asm
-    {
-        cmp     ebp, SSHADS_LIMIT
+    __asm__(R"(
+        cmp     ebp, dword ptr [_SSHADS_LIMIT]
         jnz     loc_513538
-        jmp ext_513465
+        jmp dword ptr [_ext_513465]
         loc_513538 :
-        jmp ext_513538
-    }
+        jmp dword ptr [_ext_513538]
+    )");
 }
 
 DWORD ext_512D61 = 0x512D61;
 void __declspec(naked) patch_512D58()
 {
-    __asm
-    {
-        add     edx, 200h
-        cmp     eax, SSHADS_LIMIT
-        jmp ext_512D61
-    }
+    __asm__(R"(
+        add     edx, 0x200
+        cmp     eax, dword ptr [_SSHADS_LIMIT]
+        jmp dword ptr [_ext_512D61]
+    )");
 }
 
 DWORD ext_516C36 = 0x516C36;
 void __declspec(naked) patch_516C30()
 {
-    __asm
-    {
-        add     ebp, 40h
-        cmp     ebx, SSHADS_LIMIT
-        jmp ext_516C36
-    }
+    __asm__(R"(
+        add     ebp, 0x40
+        cmp     ebx, dword ptr [_SSHADS_LIMIT]
+        jmp dword ptr [_ext_516C36]
+    )");
 }
 
 DWORD ext_514674 = 0x514674;
 void __declspec(naked) patch_51466B()
 {
-    __asm
-    {
-        add     ebp, 200h
-        cmp     eax, SSHADS_LIMIT
-        jmp ext_514674
-    }
+    __asm__(R"(
+        add     ebp, 0x200
+        cmp     eax, dword ptr [_SSHADS_LIMIT]
+        jmp dword ptr [_ext_514674]
+    )");
 }
 
 DWORD ext_5146CE = 0x5146CE;
 void __declspec(naked) patch_5146C9()
 {
-    __asm
-    {
+    __asm__(R"(
         pop     ecx
-        cmp     eax, SSHADS_LIMIT
+        cmp     eax, dword ptr [_SSHADS_LIMIT]
         pop     ecx
-        jmp ext_5146CE
-    }
+        jmp dword ptr [_ext_5146CE]
+    )");
 }
 
 DWORD ext_5148CD = 0x5148CD;
 void __declspec(naked) patch_5148C8()
 {
-    __asm
-    {
-        mov _EAX, eax
-        mov eax, SSHADS_LIMIT
-        cmp     dword ptr[esp + 18h], eax
-        mov eax, _EAX
-        jmp ext_5148CD
-    }
+    __asm__(R"(
+        mov dword ptr [__EAX], eax
+        mov eax, dword ptr [_SSHADS_LIMIT]
+        cmp     dword ptr[esp + 0x18], eax
+        mov eax, dword ptr [__EAX]
+        jmp dword ptr [_ext_5148CD]
+    )");
 }
 
 DWORD ext_5148E6 = 0x5148E6;
 void __declspec(naked) patch_5148E1()
 {
-    __asm
-    {
-        mov _EAX, eax
-        mov eax, SSHADS_LIMIT
-        cmp     dword ptr[esp + 20h], eax
-        mov eax, _EAX
-        jmp ext_5148E6
-    }
+    __asm__(R"(
+        mov dword ptr [__EAX], eax
+        mov eax, dword ptr [_SSHADS_LIMIT]
+        cmp     dword ptr[esp + 0x20], eax
+        mov eax, dword ptr [__EAX]
+        jmp dword ptr [_ext_5148E6]
+    )");
 }
 
 class StaticShadowsIII : public SimpleAdjuster

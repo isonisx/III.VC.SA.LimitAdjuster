@@ -53,6 +53,10 @@ namespace Hook
 		int temp = GetOffset(address, loc);
 		Patch(address, &temp, 4);
 	}
+	inline void RedirectOffset(int address, void (*func)())
+	{
+		RedirectOffset(address, reinterpret_cast<void*>(func));
+	}
 	inline void RedirectShortOffset(int address, int loc)
 	{
 		unsigned char temp = GetShortOffset(address, loc);
@@ -75,6 +79,10 @@ namespace Hook
 		unsigned char temp = 0xE9;
 		Patch(address++, &temp, 1);
 		RedirectOffset(address, loc);
+	}
+	inline void RedirectJump(int address, void (*func)())
+	{
+		RedirectJump(address, reinterpret_cast<void*>(func));
 	}
 	inline void RedirectShortJump(int address, int loc)
 	{
