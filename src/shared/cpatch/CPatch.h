@@ -46,12 +46,22 @@ public:
 		temp = (int)func - ((int)address + 5);
 		Patch((void *)((int)address + 1), &temp, 4);
 	}
+	template<typename Return, typename... Args>
+	inline static void RedirectCall(int address, Return (*func)(Args...))
+	{
+		RedirectCall(address, reinterpret_cast<void*>(func));
+	}
 	inline static void RedirectJump(int address, void *func)
 	{
 		int temp = 0xE9;
 		Patch((void *)address, &temp, 1);
 		temp = (int)func - ((int)address + 5);
 		Patch((void *)((int)address + 1), &temp, 4);
+	}
+	template<typename Return, typename... Args>
+	inline static void RedirectJump(int address, Return (*func)(Args...))
+	{
+		RedirectJump(address, reinterpret_cast<void*>(func));
 	}
 	inline static void SetChar(int address, char value)
 	{

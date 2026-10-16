@@ -158,7 +158,7 @@ class StoreAdjuster : public SimpleAdjuster
             else if(IsSA())
             {
                 pModelInfoPtrs     = lazy_object<0x5B9299+1, void**>::get();
-                pModelInfoPtrs_end = lazy_object<0x5B92AE+2, void**>::get();
+                pModelInfoPtrs_end = lazy_object<0x5B92AE + 2, void**>::get();
             }
 
             // Find pointers in the array that are in the old bounds and then fix it to the current bound

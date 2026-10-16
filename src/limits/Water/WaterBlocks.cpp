@@ -5,7 +5,7 @@
  */
 #include "LimitAdjuster.h"
 #include <stdexcept>
- 
+
 using namespace injector;
 
 // Assembly related stuff
@@ -14,7 +14,7 @@ extern "C" int  LIMIT_OutsideWorldWaterBlocks;
 extern "C" void* ASM_OutsideWorldWaterBlocks_ret1;
 extern "C" void* ASM_OutsideWorldWaterBlocks_ret2;
 
- 
+
 /*
  *  Key: OutsideWorldWaterBlocks
  *  Value: Integer, Maximum value ~500
@@ -23,15 +23,15 @@ extern "C" void* ASM_OutsideWorldWaterBlocks_ret2;
 struct OutsideWorldWaterBlocks : public SimpleAdjuster
 {
 	uint16_t *a, *aX, *aY;
-	
+
 	// Constructs initializing array to null
 	OutsideWorldWaterBlocks() : a(nullptr)
 	{}
-	
+
 	// Destructs deleting array
 	~OutsideWorldWaterBlocks()
 	{ this->Free(); }
-	
+
 	// Limit Name
 	const char* GetLimitName()
 	{
@@ -42,12 +42,12 @@ struct OutsideWorldWaterBlocks : public SimpleAdjuster
 	void ChangeLimit(int, const std::string& value)
 	{
 		auto limit = std::stoi(value);
-		
+
 		// This maximum value for the limit is related to the maximum number of vertices/indices the temporary vertices/indices array
 		// for immediate mode can handle...
 		// If this value is too high, it will end up overwriting game info at .data segment, after the temporary immediate arrays
 		if(limit > 500) throw std::runtime_error("Maximum value for OutsideWorldWaterBlocks is 500");
-		
+
 		// Allocate array to store X and Y position of the outside world water blocks
 		this->a  = this->ReAlloc(limit);
 		this->aX = &a[0];
@@ -63,7 +63,7 @@ struct OutsideWorldWaterBlocks : public SimpleAdjuster
 		WriteMemory(0x6EF6E8 + 0x4, aY, true);
 		WriteMemory(0x6EFE95 + 0x4, aY, true);
 		WriteMemory(0x6EFEAF + 0x4, aY, true);
-		
+
 		// Find real offsets for the assembly hook
 		ASM_OutsideWorldWaterBlocks_ret1 = lazy_pointer<0x6E6CEE>::get();
 		ASM_OutsideWorldWaterBlocks_ret2 = lazy_pointer<0x6E6D04>::get();
@@ -113,16 +113,15 @@ void* ASM_OutsideWorldWaterBlocks_ret2;
 
 void __declspec(naked) ASM_OutsideWorldWaterBlocks()
 {
-	__asm
-	{
-			cmp     eax, LIMIT_OutsideWorldWaterBlocks
+	__asm__(R"(
+			cmp     eax, dword ptr [_LIMIT_OutsideWorldWaterBlocks]
 			jge     _Full
-			push    ASM_OutsideWorldWaterBlocks_ret1
+			push    dword ptr [_ASM_OutsideWorldWaterBlocks_ret1]
 			ret
 		_Full:
-			push    ASM_OutsideWorldWaterBlocks_ret2
+			push    dword ptr [_ASM_OutsideWorldWaterBlocks_ret2]
 			ret
-	}
+	)");
 }
 
 /////////////////////////////////////////////GTA Vice City/////////////////////////////////////////////

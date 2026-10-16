@@ -45,9 +45,9 @@ struct PoolAdjuster : PoolAdjusterBase
 		limit() = newLimit;
 		
 		if(Adjuster::IsIII())
-			hb().fun = MakeCALL(addr_call, raw_ptr(HookedConstructor3)).get();
+			hb().fun = injector::MakeCALL(addr_call, injector::raw_ptr(HookedConstructor3)).get();
 		else
-			hb().fun = MakeCALL(addr_call, raw_ptr(HookedConstructor)).get();
+			hb().fun = injector::MakeCALL(addr_call, injector::raw_ptr(HookedConstructor)).get();
 	}
 	
 	// This will be called instead of the standard CPool constructor
@@ -90,4 +90,3 @@ struct PoolAdjuster : PoolAdjusterBase
         throw std::runtime_error("Cannot set this pool to be unlimited");
     }
 };
-

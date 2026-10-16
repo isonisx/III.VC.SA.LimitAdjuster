@@ -20,6 +20,7 @@
 template<uintptr_t addr_call, uintptr_t addr_sizeofpool, size_t sizeof_obj>
 struct PoolAdjusterDynamic : PoolAdjuster<addr_call>
 {
+    using PoolAdjuster<addr_call>::hb;
     typedef typename std::aligned_storage<sizeof_obj, 1>::type T;   // U type of element the pool stores
     typedef CDynamicPool<T> pool_type;                              // The pool type
 
@@ -35,13 +36,13 @@ struct PoolAdjusterDynamic : PoolAdjuster<addr_call>
 	{
         // Patches the constructor to construct our pool
 		if(Adjuster::IsIII())
-			hb().fun = MakeCALL(addr_call, raw_ptr(HookedConstructor3)).get();
+			hb().fun = injector::MakeCALL(addr_call, injector::raw_ptr(HookedConstructor3)).get();
 		else
-			hb().fun = MakeCALL(addr_call, raw_ptr(HookedConstructor)).get();
+			hb().fun = injector::MakeCALL(addr_call, injector::raw_ptr(HookedConstructor)).get();
 
         // Make sure the sizeof CDynamicPool is handleable by the game and change the allocation size
         static_assert(sizeof(pool_type) < 127, "sizeof(CDynamicPool) too big");
-        WriteMemory<char>(addr_sizeofpool, sizeof(pool_type), true);
+        injector::WriteMemory<char>(addr_sizeofpool, sizeof(pool_type), true);
 
         // Do very specific patching
         if(Adjuster::IsSA()) Patch_SA();
@@ -50,14 +51,14 @@ struct PoolAdjusterDynamic : PoolAdjuster<addr_call>
     // Patches operator new and operator delete to our own
     static void PatchStaticND(uintptr_t new_ptr, uintptr_t del_ptr)
     {
-        MakeJMP(new_ptr, Do_StaticAlloc);
-        MakeJMP(del_ptr, Do_StaticRelease);
+        injector::MakeJMP(new_ptr, Do_StaticAlloc);
+        injector::MakeJMP(del_ptr, Do_StaticRelease);
     }
 
     // Patches an delete(px->flags) to actually delete all our custom allocations
     static void PatchShutdown(uintptr_t ptr_to_call_to_delete_flags)
     {
-        MakeCALL(ptr_to_call_to_delete_flags, HookedDestruction);
+        injector::MakeCALL(ptr_to_call_to_delete_flags, HookedDestruction);
     }
 
 
@@ -127,8 +128,8 @@ struct PoolAdjusterDynamic : PoolAdjuster<addr_call>
             case 0x551251:  // TaskAllocator
                 PatchShutdown(0x551DB6);
                 //PatchStaticND(0x69D980, 0x69D990);  // Crashes on HOODLUM, crazy code obfuscation
-                MakeJMP(0x69D8E0, Do_Alloc);          // Get over it by hooking at CPool method itself
-                MakeJMP(0x69D990, Do_StaticRelease);  // No need to 'get over it' here
+                injector::MakeJMP(0x69D8E0, Do_Alloc);          // Get over it by hooking at CPool method itself
+                injector::MakeJMP(0x69D990, Do_StaticRelease);  // No need to 'get over it' here
                 injector::MakeInline<0x69D9D1, 0x69D9F5>(ReleaseESI);
                 injector::MakeInline<0x69DA11, 0x69DA35>(ReleaseESI);
                 injector::MakeInline<0x69DA51, 0x69DA75>(ReleaseESI);
@@ -310,7 +311,6 @@ struct PoolAdjusterDynamic : PoolAdjuster<addr_call>
         }
 
         // Not patched using the dynamic adjuster, try to get usage with the normal pool adjuster
-        return PoolAdjuster::GetUsage(output);
+        return PoolAdjuster<addr_call>::GetUsage(output);
     }
 };
-

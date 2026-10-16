@@ -34,7 +34,7 @@ struct VisibilityPtrsBase : public StaticArrayAdjuster<void*>
 
         VisibilityPtrsBase() :
             StaticArrayAdjuster(pDefaultArray, DefaultArraySize),
-            m_dwUsage(*injector::lazy_ptr<pArrayUsage>().get<size_t>())
+            m_dwUsage(*injector::lazy_ptr<pArrayUsage>().template get<size_t>())
         {
             this->Instance() = this;
         }

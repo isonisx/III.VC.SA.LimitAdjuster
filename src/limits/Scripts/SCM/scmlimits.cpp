@@ -4,8 +4,8 @@
 * Licensed under the MIT License (http://opensource.org/licenses/MIT)
 */
 #include "LimitAdjuster.h"
-#include "SCMlimits.h"
-#include "..\src\shared\cpatch\SCM\CPatch.h"
+#include "scmlimits.h"
+#include "cpatch/SCM/CPatch.h"
 
 unsigned int Game_GTASA::SCMlimits::iMAINsegmentSize = 200000;
 unsigned int Game_GTASA::SCMlimits::iMissionSize = 69000;
