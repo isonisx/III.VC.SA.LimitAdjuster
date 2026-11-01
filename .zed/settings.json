@@ -1,0 +1,12 @@
+{
+  "lsp": {
+    "clangd": {
+      "binary": {
+        "path": "/usr/bin/clangd",
+        "arguments": [
+          "--query-driver=/opt/homebrew/bin/i686-w64-mingw32-g++,/usr/local/bin/i686-w64-mingw32-g++"
+        ]
+      }
+    }
+  }
+}

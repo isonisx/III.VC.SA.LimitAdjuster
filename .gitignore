@@ -5,6 +5,7 @@ nbproject
 msvc
 VS
 Makefile
+!mingw/Makefile
 release/gamedir
 
 #################
